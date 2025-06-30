@@ -7,6 +7,7 @@ import { SessionsList } from './components/SessionsList';
 import { ProgressChart } from './components/ProgressChart';
 import { ExportButton } from './components/ExportButton';
 import { ConfettiCelebration } from './components/ConfettiCelebration';
+import { MotivationalQuote } from './components/MotivationalQuote';
 import { useFitnessData } from './hooks/useFitnessData';
 
 function App() {
@@ -40,6 +41,11 @@ function App() {
 
         {isConnected && (
           <>
+            <MotivationalQuote
+              getTodaysProgress={getTodaysProgress}
+              isConnected={isConnected}
+            />
+
             <ProgressSection
               getTodaysProgress={getTodaysProgress}
               getTodaysSessions={getTodaysSessions}
