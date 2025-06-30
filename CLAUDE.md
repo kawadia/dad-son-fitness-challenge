@@ -8,11 +8,22 @@ This is a fitness tracking application for a dad and son challenge with real-tim
 
 ## Architecture
 
-- **Single File Application**: The entire app is contained in `index.html`
+- **Modular Design**: Application split into separate files for maintainability
 - **Cloud Storage**: Uses Firebase Firestore for real-time data synchronization
 - **Family-Based Sharing**: Multiple devices can sync using a shared Family ID
-- **No Build Process**: Static HTML file that can be opened directly in a browser
+- **No Build Process**: Static files that can be served directly from any web server
 - **Responsive Design**: Mobile-friendly layout with CSS Grid and Flexbox
+
+## File Structure
+
+```
+/
+├── index.html          # Main entry point with HTML structure
+├── styles.css          # All CSS styles and responsive design
+├── app.js             # Main application logic and UI interactions
+├── firebase.js        # Firebase configuration and database operations
+└── CLAUDE.md          # This documentation file
+```
 
 ## Key Components
 
@@ -50,10 +61,19 @@ Workout data is stored in Firestore with the following structure:
 
 ## Development
 
-- **Testing**: Open `index.html` in a web browser
+- **Local Development**: Serve files from a local web server (required for ES6 modules)
+  - `python -m http.server 8000` or `npx serve .`
+- **File Dependencies**: `app.js` imports `firebase.js` using ES6 modules
 - **Local Storage**: Family ID and user selection stored locally for convenience
 - **Firebase Console**: Monitor data at https://console.firebase.google.com
-- **Browser DevTools**: Use for debugging Firestore operations
+- **Browser DevTools**: Use for debugging Firestore operations and module imports
+
+## Key Files
+
+- **`index.html`**: Clean HTML structure with minimal inline styles
+- **`styles.css`**: Complete CSS with responsive design and component styles
+- **`firebase.js`**: Firebase service class with all database operations
+- **`app.js`**: Main application logic, event handlers, and UI updates
 
 ## Features
 
