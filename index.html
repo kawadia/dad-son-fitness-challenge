@@ -254,7 +254,7 @@
             cursor: pointer;
             transition: background 0.2s;
             font-size: 1rem;
-            width: 100%;
+            flex: 1;
             height: 48px;
         }
         
@@ -265,6 +265,34 @@
         .add-button:disabled {
             background: #d1d5db;
             cursor: not-allowed;
+        }
+
+        .undo-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 1rem;
+            height: 48px;
+            margin-left: 8px;
+        }
+        
+        .undo-button:hover:not(:disabled) {
+            background: #dc2626;
+        }
+        
+        .undo-button:disabled {
+            background: #fca5a5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            align-items: center;
         }
         
         .sessions-grid {
@@ -492,9 +520,14 @@
                     
                     <div class="form-group">
                         <label class="form-label">&nbsp;</label>
-                        <button class="add-button" id="add-button" onclick="addWorkout()">
-                            🚀 Add Workout for <span id="current-user">Dad</span> 🚀
-                        </button>
+                        <div class="button-group">
+                            <button class="add-button" id="add-button" onclick="addWorkout()">
+                                🚀 Add Workout for <span id="current-user">Dad</span> 🚀
+                            </button>
+                            <button class="undo-button" id="undo-button" onclick="undoLastWorkout()" disabled>
+                                ↶ Undo
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -605,7 +638,7 @@
                 
             } catch (error) {
                 console.error('Error connecting to family:', error);
-                alert('Error connecting. Please try again.');
+                alert('Error connecting: ' + error.message + '. Please check the browser console for details.');
             }
         }
 
@@ -613,25 +646,37 @@
         async function initializeFirestoreData() {
             if (!familyId) return;
             
-            const docRef = doc(db, 'families', familyId);
-            const docSnap = await getDoc(docRef);
+            console.log('Initializing Firestore data for family:', familyId);
             
-            if (!docSnap.exists()) {
-                // Create new family document
-                const initialData = {
-                    Dad: {},
-                    Son: {},
-                    lastUpdated: new Date().toISOString()
-                };
-                await setDoc(docRef, initialData);
-                workoutData = { Dad: {}, Son: {} };
-            } else {
-                // Load existing data
-                const data = docSnap.data();
-                workoutData = {
-                    Dad: data.Dad || {},
-                    Son: data.Son || {}
-                };
+            try {
+                const docRef = doc(db, 'families', familyId);
+                console.log('Getting document...');
+                const docSnap = await getDoc(docRef);
+                
+                if (!docSnap.exists()) {
+                    console.log('Document does not exist, creating new one...');
+                    // Create new family document
+                    const initialData = {
+                        Dad: {},
+                        Son: {},
+                        lastUpdated: new Date().toISOString()
+                    };
+                    await setDoc(docRef, initialData);
+                    console.log('New document created successfully');
+                    workoutData = { Dad: {}, Son: {} };
+                } else {
+                    console.log('Loading existing document...');
+                    // Load existing data
+                    const data = docSnap.data();
+                    workoutData = {
+                        Dad: data.Dad || {},
+                        Son: data.Son || {}
+                    };
+                    console.log('Existing data loaded successfully');
+                }
+            } catch (error) {
+                console.error('Error in initializeFirestoreData:', error);
+                throw error;
             }
             
             // Ensure today's data exists
@@ -657,6 +702,7 @@
             
             updateDisplay();
             selectUser(currentUser);
+            updateUndoButton();
         }
 
         // Set up real-time listener
@@ -684,6 +730,7 @@
                     });
                     
                     updateDisplay();
+                    updateUndoButton();
                 }
             });
         }
@@ -725,6 +772,7 @@
             document.getElementById('dad-tab').classList.toggle('active', user === 'Dad');
             document.getElementById('son-tab').classList.toggle('active', user === 'Son');
             document.getElementById('current-user').textContent = user;
+            updateUndoButton();
             
             // Save user selection to localStorage
             try {
@@ -770,6 +818,9 @@
             
             // Update display immediately for responsiveness
             updateDisplay();
+            
+            // Enable undo button
+            updateUndoButton();
         }
 
         // Get today's progress for user
@@ -836,6 +887,40 @@
                     `).join('');
                 }
             });
+        }
+
+        // Undo last workout
+        async function undoLastWorkout() {
+            if (!familyId) {
+                alert('Please connect to your family first!');
+                return;
+            }
+            
+            const userToday = workoutData[currentUser][today];
+            if (!userToday || userToday.sessions.length === 0) {
+                return; // No sessions to undo
+            }
+            
+            // Remove the last session
+            const lastSession = userToday.sessions.pop();
+            userToday.totalReps -= lastSession.reps;
+            userToday.goalMet = userToday.totalReps >= 141;
+            
+            // Save to Firestore
+            await saveData();
+            
+            // Update display immediately for responsiveness
+            updateDisplay();
+            updateUndoButton();
+        }
+
+        // Update undo button state
+        function updateUndoButton() {
+            const undoButton = document.getElementById('undo-button');
+            const userToday = workoutData[currentUser] && workoutData[currentUser][today];
+            const hasWorkouts = userToday && userToday.sessions && userToday.sessions.length > 0;
+            
+            undoButton.disabled = !hasWorkouts;
         }
 
         // Export to CSV
