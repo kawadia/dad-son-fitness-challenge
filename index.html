@@ -387,6 +387,26 @@
                 <h1>💪 Dad & Son Fitness Challenge 🔥</h1>
                 <p>🎯 Daily Goal: 141 Reps 🎯</p>
                 <p>💯 Stay Strong Together! 💯</p>
+                
+                <!-- Family ID Section -->
+                <div id="family-setup" style="margin-top: 20px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+                    <div style="margin-bottom: 12px; font-weight: 500;">👨‍👩‍👧‍👦 Family ID:</div>
+                    <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
+                        <input type="text" id="family-id-input" placeholder="Enter your family name" 
+                               style="padding: 8px 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1rem;" />
+                        <button id="connect-button" onclick="connectFamily()" 
+                                style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            🔗 Connect
+                        </button>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 8px; text-align: center;">
+                        Both devices need to use the same Family ID to sync data
+                    </div>
+                </div>
+                
+                <div id="connected-status" style="display: none; margin-top: 20px; padding: 12px; background: #dcfce7; border-radius: 8px; text-align: center; color: #16a34a; font-weight: 500;">
+                    ✅ Connected as: <span id="current-family-id"></span>
+                </div>
             </div>
 
             <!-- Combined Progress View -->
@@ -507,10 +527,44 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCEqCtIKf6jBd0-bamD3zf8Jze4G_AV7Z4",
+            authDomain: "dad-v-son-fitness-challenge.firebaseapp.com",
+            projectId: "dad-v-son-fitness-challenge",
+            storageBucket: "dad-v-son-fitness-challenge.firebasestorage.app",
+            messagingSenderId: "1007734733222",
+            appId: "1:1007734733222:web:96698a7aa2303425033767",
+            measurementId: "G-Z55FT3W2VC"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Make Firebase functions available globally
+        window.db = db;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.onSnapshot = onSnapshot;
+        window.collection = collection;
+        window.query = query;
+        window.where = where;
+        window.orderBy = orderBy;
+    </script>
+
     <script>
         // Global state
         let currentUser = 'Dad';
         let workoutData = {};
+        let familyId = null;
         
         const exercises = {
             'squats': '🏋️',
@@ -522,16 +576,74 @@
         
         const today = new Date().toISOString().split('T')[0];
 
-        // Initialize data
-        function initializeData() {
-            try {
-                const savedData = localStorage.getItem('fitnessTrackerData');
-                if (savedData) {
-                    workoutData = JSON.parse(savedData);
-                }
-            } catch (error) {
-                console.error('Error loading saved data:', error);
+        // Connect to family
+        async function connectFamily() {
+            const familyIdInput = document.getElementById('family-id-input');
+            const inputValue = familyIdInput.value.trim();
+            
+            if (!inputValue) {
+                alert('Please enter a family ID');
+                return;
             }
+            
+            familyId = inputValue.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            try {
+                // Save family ID locally
+                localStorage.setItem('familyId', familyId);
+                
+                // Initialize data structure
+                await initializeFirestoreData();
+                
+                // Set up real-time listener
+                setupRealtimeListener();
+                
+                // Update UI
+                document.getElementById('family-setup').style.display = 'none';
+                document.getElementById('connected-status').style.display = 'block';
+                document.getElementById('current-family-id').textContent = inputValue;
+                
+            } catch (error) {
+                console.error('Error connecting to family:', error);
+                alert('Error connecting. Please try again.');
+            }
+        }
+
+        // Initialize Firestore data
+        async function initializeFirestoreData() {
+            if (!familyId) return;
+            
+            const docRef = doc(db, 'families', familyId);
+            const docSnap = await getDoc(docRef);
+            
+            if (!docSnap.exists()) {
+                // Create new family document
+                const initialData = {
+                    Dad: {},
+                    Son: {},
+                    lastUpdated: new Date().toISOString()
+                };
+                await setDoc(docRef, initialData);
+                workoutData = { Dad: {}, Son: {} };
+            } else {
+                // Load existing data
+                const data = docSnap.data();
+                workoutData = {
+                    Dad: data.Dad || {},
+                    Son: data.Son || {}
+                };
+            }
+            
+            // Ensure today's data exists
+            ['Dad', 'Son'].forEach(user => {
+                if (!workoutData[user][today]) {
+                    workoutData[user][today] = {
+                        sessions: [],
+                        totalReps: 0,
+                        goalMet: false
+                    };
+                }
+            });
             
             // Load saved user selection
             try {
@@ -543,30 +655,67 @@
                 console.error('Error loading saved user:', error);
             }
             
-            if (!workoutData.Dad) workoutData.Dad = {};
-            if (!workoutData.Son) workoutData.Son = {};
-            
-            ['Dad', 'Son'].forEach(user => {
-                if (!workoutData[user][today]) {
-                    workoutData[user][today] = {
-                        sessions: [],
-                        totalReps: 0,
-                        goalMet: false
-                    };
-                }
-            });
-            
-            saveData();
             updateDisplay();
-            selectUser(currentUser); // Set the UI to match the loaded user
+            selectUser(currentUser);
         }
 
-        // Save data to localStorage
-        function saveData() {
+        // Set up real-time listener
+        function setupRealtimeListener() {
+            if (!familyId) return;
+            
+            const docRef = doc(db, 'families', familyId);
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    workoutData = {
+                        Dad: data.Dad || {},
+                        Son: data.Son || {}
+                    };
+                    
+                    // Ensure today's data exists
+                    ['Dad', 'Son'].forEach(user => {
+                        if (!workoutData[user][today]) {
+                            workoutData[user][today] = {
+                                sessions: [],
+                                totalReps: 0,
+                                goalMet: false
+                            };
+                        }
+                    });
+                    
+                    updateDisplay();
+                }
+            });
+        }
+
+        // Save data to Firestore
+        async function saveData() {
+            if (!familyId) return;
+            
             try {
-                localStorage.setItem('fitnessTrackerData', JSON.stringify(workoutData));
+                const docRef = doc(db, 'families', familyId);
+                await setDoc(docRef, {
+                    Dad: workoutData.Dad,
+                    Son: workoutData.Son,
+                    lastUpdated: new Date().toISOString()
+                });
             } catch (error) {
                 console.error('Error saving data:', error);
+            }
+        }
+
+        // Initialize data
+        function initializeData() {
+            // Check if family ID is already saved
+            try {
+                const savedFamilyId = localStorage.getItem('familyId');
+                if (savedFamilyId) {
+                    familyId = savedFamilyId;
+                    document.getElementById('family-id-input').value = savedFamilyId;
+                    connectFamily();
+                }
+            } catch (error) {
+                console.error('Error loading saved family ID:', error);
             }
         }
 
@@ -586,7 +735,12 @@
         }
 
         // Add workout
-        function addWorkout() {
+        async function addWorkout() {
+            if (!familyId) {
+                alert('Please connect to your family first!');
+                return;
+            }
+            
             const exercise = document.getElementById('exercise-select').value;
             const repsInput = document.getElementById('reps-input');
             const reps = parseInt(repsInput.value);
@@ -610,7 +764,11 @@
             userToday.goalMet = userToday.totalReps >= 141;
 
             repsInput.value = '';
-            saveData();
+            
+            // Save to Firestore
+            await saveData();
+            
+            // Update display immediately for responsiveness
             updateDisplay();
         }
 
@@ -726,6 +884,12 @@
         document.getElementById('reps-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addWorkout();
+            }
+        });
+
+        document.getElementById('family-id-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                connectFamily();
             }
         });
 
