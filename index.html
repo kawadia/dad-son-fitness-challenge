@@ -150,6 +150,14 @@
                 </div>
             </div>
 
+            <!-- Progress Chart -->
+            <div class="chart-section">
+                <div class="chart-title">📊 Last 2 Weeks Progress 📈</div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+
             <!-- Export Button -->
             <div class="export-section">
                 <button class="export-button" onclick="exportToCSV()">
@@ -162,6 +170,8 @@
         </div>
     </div>
 
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Load the main application script -->
     <script type="module" src="app.js"></script>
 </body>

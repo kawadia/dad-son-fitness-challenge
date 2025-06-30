@@ -6,6 +6,7 @@ let currentUser = 'Dad';
 let workoutData = {};
 let familyId = null;
 let dateTimeInterval;
+let progressChart = null;
 
 const exercises = {
     'squats': '🏋️',
@@ -246,6 +247,9 @@ function updateDisplay() {
             `).join('');
         }
     });
+    
+    // Update chart
+    updateProgressChart();
 }
 
 // Update undo button state
@@ -397,9 +401,157 @@ window.addWorkout = addWorkout;
 window.undoLastWorkout = undoLastWorkout;
 window.exportToCSV = exportToCSV;
 
+// Get last 14 days data
+function getLast14DaysData() {
+    const dates = [];
+    const dadData = [];
+    const sonData = [];
+    
+    // Generate last 14 days
+    for (let i = 13; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        const shortDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        dates.push(shortDate);
+        
+        // Get data for each user
+        const dadProgress = (workoutData.Dad && workoutData.Dad[dateString]) ? workoutData.Dad[dateString].totalReps : 0;
+        const sonProgress = (workoutData.Son && workoutData.Son[dateString]) ? workoutData.Son[dateString].totalReps : 0;
+        
+        dadData.push(dadProgress);
+        sonData.push(sonProgress);
+    }
+    
+    return { dates, dadData, sonData };
+}
+
+// Create progress chart
+function createProgressChart() {
+    const ctx = document.getElementById('progressChart');
+    if (!ctx) return;
+    
+    const { dates, dadData, sonData } = getLast14DaysData();
+    
+    progressChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: '👨 Dad',
+                data: dadData,
+                backgroundColor: 'rgba(16, 185, 129, 0.8)', // Green
+                borderColor: 'rgba(5, 150, 105, 1)',
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }, {
+                label: '👦 Son',
+                data: sonData,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)', // Blue
+                borderColor: 'rgba(37, 99, 235, 1)',
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'rect',
+                        font: {
+                            size: 14,
+                            weight: '500'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y} reps`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: Math.max(200, Math.max(...dadData), Math.max(...sonData)),
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Daily Reps',
+                        font: {
+                            size: 14,
+                            weight: '500'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            },
+            elements: {
+                bar: {
+                    borderRadius: 4
+                }
+            }
+        }
+    });
+}
+
+// Update progress chart
+function updateProgressChart() {
+    if (!progressChart) {
+        createProgressChart();
+        return;
+    }
+    
+    const { dates, dadData, sonData } = getLast14DaysData();
+    
+    progressChart.data.labels = dates;
+    progressChart.data.datasets[0].data = dadData;
+    progressChart.data.datasets[1].data = sonData;
+    
+    // Update max scale
+    const maxValue = Math.max(200, Math.max(...dadData), Math.max(...sonData));
+    progressChart.options.scales.y.max = maxValue;
+    
+    progressChart.update();
+}
+
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     initializeData();
     startDateTimeUpdates();
+    
+    // Create chart after a short delay to ensure DOM is ready
+    setTimeout(createProgressChart, 100);
 });
