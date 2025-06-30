@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "fitness-tracker-react/build",
     "ignore": [
       "firebase.json",
       "**/.*",
