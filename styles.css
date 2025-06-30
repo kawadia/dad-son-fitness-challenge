@@ -405,6 +405,22 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.change-family-button {
+    padding: 4px 12px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.change-family-button:hover {
+    background: #dc2626;
+}
+
 @media (max-width: 768px) {
     .progress-grid {
         grid-template-columns: 1fr;

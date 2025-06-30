@@ -67,6 +67,46 @@ async function connectFamily() {
     }
 }
 
+// Change family (disconnect and allow reconnection)
+function changeFamily() {
+    // Show confirmation dialog
+    const currentFamily = document.getElementById('current-family-id').textContent;
+    const confirmMessage = `Are you sure you want to disconnect from "${currentFamily}" and connect to a different family?\n\nNote: Your current data will remain in the cloud and you can reconnect later using the same family name.`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Clear current connection
+    familyId = null;
+    workoutData = { Dad: {}, Son: {} };
+    
+    // Clear local storage
+    localStorage.removeItem('familyId');
+    
+    // Stop date/time updates temporarily
+    stopDateTimeUpdates();
+    
+    // Reset UI
+    document.getElementById('family-setup').style.display = 'block';
+    document.getElementById('connected-status').style.display = 'none';
+    document.getElementById('family-id-input').value = '';
+    document.getElementById('family-id-input').focus();
+    
+    // Clear displays
+    updateDisplay();
+    updateUndoButton();
+    
+    // Destroy existing chart
+    if (progressChart) {
+        progressChart.destroy();
+        progressChart = null;
+    }
+    
+    // Restart date/time updates
+    startDateTimeUpdates();
+}
+
 // Ensure today's data exists for both users
 function ensureTodaysData() {
     ['Dad', 'Son'].forEach(user => {
@@ -396,6 +436,7 @@ function setupEventListeners() {
 
 // Make functions available globally for HTML onclick handlers
 window.connectFamily = connectFamily;
+window.changeFamily = changeFamily;
 window.selectUser = selectUser;
 window.addWorkout = addWorkout;
 window.undoLastWorkout = undoLastWorkout;

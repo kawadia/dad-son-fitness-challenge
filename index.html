@@ -32,7 +32,12 @@
                 </div>
                 
                 <div id="connected-status" style="display: none; margin-top: 20px; padding: 12px; background: #dcfce7; border-radius: 8px; text-align: center; color: #16a34a; font-weight: 500;">
-                    ✅ Connected as: <span id="current-family-id"></span>
+                    <div style="margin-bottom: 8px;">
+                        ✅ Connected as: <span id="current-family-id"></span>
+                    </div>
+                    <button id="change-family-button" onclick="changeFamily()" class="change-family-button">
+                        🔄 Change Family
+                    </button>
                 </div>
             </div>
 
