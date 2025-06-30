@@ -8,6 +8,7 @@ export const useFitnessData = () => {
   const [currentUser, setCurrentUser] = useState<UserType>('Dad');
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
+  const [lastOperationType, setLastOperationType] = useState<'add' | 'undo' | 'sync' | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -65,6 +66,7 @@ export const useFitnessData = () => {
       // Set up real-time listener
       firebaseService.setupRealtimeListener((data) => {
         const dataWithToday = ensureTodaysData(data);
+        setLastOperationType('sync'); // Mark as sync operation to prevent confetti
         setWorkoutData(dataWithToday);
       });
       
@@ -117,7 +119,8 @@ export const useFitnessData = () => {
     userToday.totalReps += reps;
     userToday.goalMet = userToday.totalReps >= 141;
 
-    // Trigger confetti for any workout if goal is met (including this one)
+    // Set operation type to 'add' and trigger confetti if goal is met
+    setLastOperationType('add');
     if (userToday.goalMet) {
       setGoalAchieved({ user: currentUser, timestamp: Date.now() });
     }
@@ -137,6 +140,10 @@ export const useFitnessData = () => {
     const lastSession = updatedData[currentUser][today].sessions.pop()!;
     updatedData[currentUser][today].totalReps -= lastSession.reps;
     updatedData[currentUser][today].goalMet = updatedData[currentUser][today].totalReps >= 141;
+    
+    // Set operation type to 'undo' and clear any pending confetti
+    setLastOperationType('undo');
+    setGoalAchieved(null);
     
     setWorkoutData(updatedData);
     await firebaseService.saveData(updatedData);
