@@ -45,6 +45,37 @@ If you want to create your own version:
 5. Replace the values in `config.js` with your credentials
 6. Set up the security rules shown in the Security section
 
+## 🚀 Deployment Options
+
+### Option 1: Firebase Hosting (Recommended)
+
+Firebase Hosting offers better performance, custom domains, and seamless integration:
+
+```bash
+# Install Firebase CLI (one-time setup)
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Initialize Firebase Hosting (one-time setup)
+firebase init hosting
+# Select your existing Firebase project
+# Set public directory to: . (current directory)
+# Configure as single-page app: Yes
+# Set up automatic builds with GitHub: No (optional)
+
+# Deploy using the provided script
+./deploy.sh
+
+# Or deploy manually
+firebase deploy --only hosting
+```
+
+### Option 2: GitHub Pages
+
+Standard GitHub Pages deployment - works out of the box after pushing to GitHub.
+
 ## 🏗️ File Structure
 
 ```
@@ -53,8 +84,10 @@ If you want to create your own version:
 ├── styles.css              # All CSS styles and responsive design
 ├── app.js                  # Main application logic and UI interactions
 ├── firebase.js             # Firebase service and database operations
-├── config.js               # Firebase credentials (gitignored)
+├── config.js               # Firebase credentials (public for web apps)
 ├── config.example.js       # Template for Firebase setup
+├── firebase.json           # Firebase hosting configuration
+├── deploy.sh               # Firebase deployment script
 ├── .gitignore             # Git ignore rules
 ├── CLAUDE.md              # Development documentation
 └── README.md              # This file
@@ -82,7 +115,7 @@ If you want to create your own version:
 - **Frontend**: Vanilla HTML, CSS, JavaScript (ES6 modules)
 - **Database**: Firebase Firestore
 - **Charts**: Chart.js
-- **Hosting**: GitHub Pages compatible
+- **Hosting**: GitHub Pages & Firebase Hosting compatible
 - **No Build Process**: Direct file serving
 
 ## 🛡️ Security
