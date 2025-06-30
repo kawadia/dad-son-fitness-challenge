@@ -6,6 +6,7 @@ import { WorkoutLogger } from './components/WorkoutLogger';
 import { SessionsList } from './components/SessionsList';
 import { ProgressChart } from './components/ProgressChart';
 import { ExportButton } from './components/ExportButton';
+import { ConfettiCelebration } from './components/ConfettiCelebration';
 import { useFitnessData } from './hooks/useFitnessData';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
     familyId,
     currentUser,
     isConnected,
+    goalAchieved,
     connectFamily,
     disconnectFamily,
     selectUser,
@@ -22,7 +24,8 @@ function App() {
     getTodaysProgress,
     getTodaysSessions,
     calculateStreak,
-    canUndo
+    canUndo,
+    hasAchievedGoal
   } = useFitnessData();
 
   return (
@@ -66,6 +69,15 @@ function App() {
           </>
         )}
       </div>
+      
+      {/* Confetti celebration overlay */}
+      {goalAchieved && (
+        <ConfettiCelebration
+          isGoalMet={true}
+          userName={goalAchieved.user}
+          totalReps={getTodaysProgress(goalAchieved.user)}
+        />
+      )}
     </div>
   );
 }

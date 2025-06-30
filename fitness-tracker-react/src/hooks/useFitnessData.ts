@@ -7,6 +7,7 @@ export const useFitnessData = () => {
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserType>('Dad');
   const [isConnected, setIsConnected] = useState(false);
+  const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -111,9 +112,15 @@ export const useFitnessData = () => {
     }
     
     const userToday = updatedData[currentUser][today];
+    
     userToday.sessions.push(session);
     userToday.totalReps += reps;
     userToday.goalMet = userToday.totalReps >= 141;
+
+    // Trigger confetti for any workout if goal is met (including this one)
+    if (userToday.goalMet) {
+      setGoalAchieved({ user: currentUser, timestamp: Date.now() });
+    }
 
     setWorkoutData(updatedData);
     await firebaseService.saveData(updatedData);
@@ -169,12 +176,19 @@ export const useFitnessData = () => {
     return !!(userToday?.sessions?.length > 0);
   }, [workoutData, currentUser, today]);
 
+  // Check if user has achieved goal today
+  const hasAchievedGoal = useCallback((user: UserType): boolean => {
+    const todayData = workoutData[user]?.[today];
+    return todayData ? todayData.goalMet : false;
+  }, [workoutData, today]);
+
   return {
     workoutData,
     familyId,
     currentUser,
     isConnected,
     today,
+    goalAchieved,
     connectFamily,
     disconnectFamily,
     selectUser,
@@ -183,6 +197,7 @@ export const useFitnessData = () => {
     getTodaysProgress,
     getTodaysSessions,
     calculateStreak,
-    canUndo
+    canUndo,
+    hasAchievedGoal
   };
 };
