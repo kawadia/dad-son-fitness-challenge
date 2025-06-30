@@ -440,6 +440,9 @@
             <!-- Combined Progress View -->
             <div class="progress-section">
                 <div class="progress-title">🏆 Today's Challenge Progress 🏆</div>
+                <div style="text-align: center; margin-bottom: 16px; font-size: 0.9rem; color: #6b7280;">
+                    <div id="date-time-info">📅 Loading...</div>
+                </div>
                 
                 <!-- Progress Bars -->
                 <div class="progress-grid">
@@ -608,6 +611,7 @@
         };
         
         const today = new Date().toISOString().split('T')[0];
+        let dateTimeInterval;
 
         // Connect to family
         async function connectFamily() {
@@ -923,6 +927,61 @@
             undoButton.disabled = !hasWorkouts;
         }
 
+        // Update date and time info
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Format date
+            const dateOptions = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            const formattedDate = now.toLocaleDateString('en-US', dateOptions);
+            
+            // Format current time
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            };
+            const currentTime = now.toLocaleTimeString('en-US', timeOptions);
+            
+            // Calculate time left in day
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+            const timeLeft = endOfDay - now;
+            
+            const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const secondsLeft = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            const timeLeftString = `${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`;
+            
+            // Update the display
+            const dateTimeInfo = document.getElementById('date-time-info');
+            if (dateTimeInfo) {
+                dateTimeInfo.innerHTML = `
+                    📅 ${formattedDate} | ⏰ ${currentTime} | ⏳ ${timeLeftString} left today
+                `;
+            }
+        }
+
+        // Start date/time updates
+        function startDateTimeUpdates() {
+            updateDateTime(); // Update immediately
+            dateTimeInterval = setInterval(updateDateTime, 1000); // Update every second
+        }
+
+        // Stop date/time updates
+        function stopDateTimeUpdates() {
+            if (dateTimeInterval) {
+                clearInterval(dateTimeInterval);
+            }
+        }
+
         // Export to CSV
         function exportToCSV() {
             const csvData = [];
@@ -980,6 +1039,7 @@
 
         // Initialize app
         initializeData();
+        startDateTimeUpdates();
     </script>
 </body>
 </html>
