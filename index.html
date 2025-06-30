@@ -193,13 +193,17 @@
         }
         
         .user-tab {
-            padding: 8px 24px;
+            padding: 12px 32px;
             border-radius: 6px;
             border: none;
             background: none;
             cursor: pointer;
             font-weight: 500;
             transition: all 0.2s;
+            font-size: 1rem;
+            height: 48px;
+            display: flex;
+            align-items: center;
         }
         
         .user-tab.active {
@@ -232,6 +236,7 @@
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.2s;
+            height: 48px;
         }
         
         .form-input:focus, .form-select:focus {
@@ -244,11 +249,13 @@
             color: white;
             border: none;
             border-radius: 8px;
-            padding: 12px;
+            padding: 12px 24px;
             font-weight: 500;
             cursor: pointer;
             transition: background 0.2s;
-            align-self: end;
+            font-size: 1rem;
+            width: 100%;
+            height: 48px;
         }
         
         .add-button:hover:not(:disabled) {
@@ -378,7 +385,7 @@
             <!-- Header -->
             <div class="header">
                 <h1>💪 Dad & Son Fitness Challenge 🔥</h1>
-                <p>🎯 Daily Goal: 200 Reps 🎯</p>
+                <p>🎯 Daily Goal: 141 Reps 🎯</p>
                 <p>💯 Stay Strong Together! 💯</p>
             </div>
 
@@ -392,7 +399,7 @@
                     <div class="progress-card dad">
                         <div class="progress-header">
                             <div class="progress-label">👨 Dad's Progress</div>
-                            <div class="progress-value" id="dad-progress">0/200 💪</div>
+                            <div class="progress-value" id="dad-progress">0/141 💪</div>
                         </div>
                         <div class="progress-bar dad">
                             <div class="progress-fill" id="dad-progress-fill" style="width: 0%"></div>
@@ -404,7 +411,7 @@
                     <div class="progress-card son">
                         <div class="progress-header">
                             <div class="progress-label">👦 Son's Progress</div>
-                            <div class="progress-value" id="son-progress">0/200 💪</div>
+                            <div class="progress-value" id="son-progress">0/141 💪</div>
                         </div>
                         <div class="progress-bar son">
                             <div class="progress-fill" id="son-progress-fill" style="width: 0%"></div>
@@ -464,6 +471,7 @@
                     </div>
                     
                     <div class="form-group">
+                        <label class="form-label">&nbsp;</label>
                         <button class="add-button" id="add-button" onclick="addWorkout()">
                             🚀 Add Workout for <span id="current-user">Dad</span> 🚀
                         </button>
@@ -525,6 +533,16 @@
                 console.error('Error loading saved data:', error);
             }
             
+            // Load saved user selection
+            try {
+                const savedUser = localStorage.getItem('selectedUser');
+                if (savedUser && (savedUser === 'Dad' || savedUser === 'Son')) {
+                    currentUser = savedUser;
+                }
+            } catch (error) {
+                console.error('Error loading saved user:', error);
+            }
+            
             if (!workoutData.Dad) workoutData.Dad = {};
             if (!workoutData.Son) workoutData.Son = {};
             
@@ -540,6 +558,7 @@
             
             saveData();
             updateDisplay();
+            selectUser(currentUser); // Set the UI to match the loaded user
         }
 
         // Save data to localStorage
@@ -557,6 +576,13 @@
             document.getElementById('dad-tab').classList.toggle('active', user === 'Dad');
             document.getElementById('son-tab').classList.toggle('active', user === 'Son');
             document.getElementById('current-user').textContent = user;
+            
+            // Save user selection to localStorage
+            try {
+                localStorage.setItem('selectedUser', user);
+            } catch (error) {
+                console.error('Error saving user selection:', error);
+            }
         }
 
         // Add workout
@@ -581,7 +607,7 @@
             const userToday = workoutData[currentUser][today];
             userToday.sessions.push(session);
             userToday.totalReps += reps;
-            userToday.goalMet = userToday.totalReps >= 200;
+            userToday.goalMet = userToday.totalReps >= 141;
 
             repsInput.value = '';
             saveData();
@@ -622,14 +648,14 @@
                 const progress = getTodaysProgress(user);
                 const sessions = getTodaysSessions(user);
                 const streak = calculateStreak(user);
-                const percentage = Math.min((progress / 200) * 100, 100);
+                const percentage = Math.min((progress / 141) * 100, 100);
                 
                 const userLower = user.toLowerCase();
                 
                 // Update progress
-                document.getElementById(`${userLower}-progress`).textContent = `${progress}/200 💪`;
+                document.getElementById(`${userLower}-progress`).textContent = `${progress}/141 💪`;
                 document.getElementById(`${userLower}-progress-fill`).style.width = `${percentage}%`;
-                document.getElementById(`${userLower}-goal`).style.display = progress >= 200 ? 'block' : 'none';
+                document.getElementById(`${userLower}-goal`).style.display = progress >= 141 ? 'block' : 'none';
                 
                 // Update stats
                 document.getElementById(`${userLower}-streak`).textContent = `${streak} days 🏆`;
