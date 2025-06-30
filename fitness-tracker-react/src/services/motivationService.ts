@@ -11,41 +11,27 @@ interface WorkoutStats {
 }
 
 export class MotivationService {
-  private static readonly API_KEY = process.env.REACT_APP_CLAUDE_API_KEY;
-  private static readonly API_URL = 'https://api.anthropic.com/v1/messages';
+  // Use Firebase Function endpoint
+  private static readonly FUNCTION_URL = process.env.NODE_ENV === 'development' 
+    ? 'http://127.0.0.1:5001/dad-v-son-fitness-challenge/us-central1/getMotivationalQuote'
+    : 'https://us-central1-dad-v-son-fitness-challenge.cloudfunctions.net/getMotivationalQuote';
 
   static async getMotivationalQuote(stats: WorkoutStats): Promise<string> {
-    if (!this.API_KEY) {
-      console.warn('Claude API key not found, using fallback quotes');
-      return this.getFallbackQuote(stats);
-    }
-
     try {
-      const prompt = this.createPrompt(stats);
-      
-      const response = await fetch(this.API_URL, {
+      const response = await fetch(this.FUNCTION_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.API_KEY,
-          'anthropic-version': '2023-06-01'
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 150,
-          messages: [{
-            role: 'user',
-            content: prompt
-          }]
-        })
+        body: JSON.stringify(stats)
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        throw new Error(`Function request failed: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.content[0].text || this.getFallbackQuote(stats);
+      return data.quote || this.getFallbackQuote(stats);
       
     } catch (error) {
       console.error('Error fetching motivational quote:', error);
@@ -53,25 +39,6 @@ export class MotivationService {
     }
   }
 
-  private static createPrompt(stats: WorkoutStats): string {
-    const { dadReps, sonReps, dadGoalMet, sonGoalMet, hoursLeft, minutesLeft } = stats;
-    
-    return `Generate a SHORT (1-2 sentences max), funny, and motivational quote for a dad and son fitness challenge app. Here's the current situation:
-
-Dad (47 years old): ${dadReps}/141 reps today (Goal ${dadGoalMet ? 'COMPLETED ✅' : 'NOT YET reached'})
-Son (12 years old): ${sonReps}/141 reps today (Goal ${sonGoalMet ? 'COMPLETED ✅' : 'NOT YET reached'})
-Time left today: ${hoursLeft}h ${minutesLeft}m
-
-Make it:
-- Funny and light-hearted
-- Motivating for both dad and son
-- Reference their current progress
-- Mention time left if relevant
-- Keep it brief (under 25 words)
-- Use emojis sparingly
-
-Just return the quote, nothing else.`;
-  }
 
   private static getFallbackQuote(stats: WorkoutStats): string {
     const { dadReps, sonReps, dadGoalMet, sonGoalMet, hoursLeft } = stats;
