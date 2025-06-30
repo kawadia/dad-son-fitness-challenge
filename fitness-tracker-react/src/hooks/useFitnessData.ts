@@ -9,8 +9,28 @@ export const useFitnessData = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
   const [lastOperationType, setLastOperationType] = useState<'add' | 'undo' | 'sync' | null>(null);
+  const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0]);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = currentDate;
+
+  // Check for date changes every minute
+  useEffect(() => {
+    const checkDateChange = () => {
+      const newDate = new Date().toISOString().split('T')[0];
+      if (newDate !== currentDate) {
+        console.log('Date changed from', currentDate, 'to', newDate);
+        setCurrentDate(newDate);
+        // Clear any goal achievements since it's a new day
+        setGoalAchieved(null);
+      }
+    };
+
+    // Check immediately and then every minute
+    checkDateChange();
+    const interval = setInterval(checkDateChange, 60000); // Check every minute
+    
+    return () => clearInterval(interval);
+  }, [currentDate]);
 
   // Load saved data from localStorage
   useEffect(() => {
@@ -44,6 +64,16 @@ export const useFitnessData = () => {
     });
     return updatedData;
   }, [today]);
+
+  // Update data when date changes
+  useEffect(() => {
+    if (isConnected && workoutData) {
+      const updatedData = ensureTodaysData(workoutData);
+      if (JSON.stringify(updatedData) !== JSON.stringify(workoutData)) {
+        setWorkoutData(updatedData);
+      }
+    }
+  }, [today, isConnected, workoutData, ensureTodaysData]);
 
   // Connect to family
   const connectFamily = async (inputFamilyId: string) => {
