@@ -4,25 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a fitness tracking application for a dad and son challenge with real-time cloud synchronization. It's a single-page HTML application with embedded CSS and JavaScript that tracks daily workout progress toward a 141-rep goal and syncs data across multiple devices using Firebase Firestore.
+This is a React TypeScript fitness tracking application for a dad and son challenge with real-time cloud synchronization. It tracks daily workout progress toward a 141-rep goal and syncs data across multiple devices using Firebase Firestore.
 
 ## Architecture
 
-- **Modular Design**: Application split into separate files for maintainability
+- **React TypeScript**: Modern component-based architecture with full type safety
+- **Component Design**: Modular React components for maintainability and reusability  
 - **Cloud Storage**: Uses Firebase Firestore for real-time data synchronization
 - **Family-Based Sharing**: Multiple devices can sync using a shared Family ID
-- **No Build Process**: Static files that can be served directly from any web server
+- **Build Process**: Optimized production builds with Create React App
 - **Responsive Design**: Mobile-friendly layout with CSS Grid and Flexbox
 
 ## File Structure
 
 ```
 /
-├── index.html          # Main entry point with HTML structure
-├── styles.css          # All CSS styles and responsive design
-├── app.js             # Main application logic and UI interactions
-├── firebase.js        # Firebase configuration and database operations
-└── CLAUDE.md          # This documentation file
+├── fitness-tracker-react/     # React TypeScript application
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   │   ├── Header.tsx     # Family connection UI
+│   │   │   ├── ProgressSection.tsx  # Progress bars and stats
+│   │   │   ├── WorkoutLogger.tsx    # Exercise logging form
+│   │   │   ├── SessionsList.tsx     # Daily workout sessions
+│   │   │   ├── ProgressChart.tsx    # Chart.js visualization
+│   │   │   └── ExportButton.tsx     # CSV export functionality
+│   │   ├── hooks/
+│   │   │   └── useFitnessData.ts    # Custom React hook for state management
+│   │   ├── services/
+│   │   │   └── firebase.ts          # TypeScript Firebase service
+│   │   ├── types/
+│   │   │   └── index.ts             # TypeScript interfaces
+│   │   ├── App.tsx                  # Main application component
+│   │   └── App.css                  # Application styles
+│   ├── build/                       # Production build output
+│   └── package.json                 # Dependencies and scripts
+├── firebase.json                    # Firebase hosting configuration
+├── deploy.sh                        # Deployment script
+├── config.js                        # Firebase configuration
+└── CLAUDE.md                        # This documentation file
 ```
 
 ## Key Components
@@ -34,6 +53,7 @@ This is a fitness tracking application for a dad and son challenge with real-tim
 - **Data Export**: CSV export functionality for all historical data
 - **User Switching**: Toggle between Dad and Son for logging workouts
 - **Real-time Sync**: Automatic updates when data changes on other devices
+- **Progress Chart**: 14-day progress visualization with Chart.js
 
 ## Firebase Integration
 
@@ -41,39 +61,53 @@ This is a fitness tracking application for a dad and son challenge with real-tim
 - **Project ID**: `dad-v-son-fitness-challenge`
 - **Data Structure**: Documents stored under `families/{familyId}` collection
 - **Real-time Listeners**: Automatic UI updates when data changes
+- **TypeScript Integration**: Fully typed Firebase service and data structures
 
 ## Data Structure
 
 Workout data is stored in Firestore with the following structure:
-```javascript
-{
-  "Dad": {
-    "2024-01-01": {
-      "sessions": [{ exercise, reps, time, timestamp }],
-      "totalReps": 150,
-      "goalMet": false
-    }
-  },
-  "Son": { /* same structure */ },
-  "lastUpdated": "2024-01-01T12:00:00.000Z"
+```typescript
+interface WorkoutData {
+  Dad: UserData;
+  Son: UserData;
+  lastUpdated?: string;
+}
+
+interface UserData {
+  [date: string]: DayData;
+}
+
+interface DayData {
+  sessions: WorkoutSession[];
+  totalReps: number;
+  goalMet: boolean;
 }
 ```
 
 ## Development
 
-- **Local Development**: Serve files from a local web server (required for ES6 modules)
-  - `python -m http.server 8000` or `npx serve .`
-- **File Dependencies**: `app.js` imports `firebase.js` using ES6 modules
+- **Local Development**: 
+  - `cd fitness-tracker-react && npm start` (http://localhost:3000)
+- **Production Build**: `cd fitness-tracker-react && npm run build`
+- **TypeScript**: Full type checking and IntelliSense support
 - **Local Storage**: Family ID and user selection stored locally for convenience
 - **Firebase Console**: Monitor data at https://console.firebase.google.com
-- **Browser DevTools**: Use for debugging Firestore operations and module imports
+- **React DevTools**: Use for debugging components and state
 
-## Key Files
+## Deployment
 
-- **`index.html`**: Clean HTML structure with minimal inline styles
-- **`styles.css`**: Complete CSS with responsive design and component styles
-- **`firebase.js`**: Firebase service class with all database operations
-- **`app.js`**: Main application logic, event handlers, and UI updates
+- **Command**: `./deploy.sh` from root directory
+- **Process**: Builds React app → Deploys to Firebase Hosting
+- **Live URL**: https://dad-v-son-fitness-challenge.web.app
+
+## Key Technologies
+
+- **Frontend**: React 18 with TypeScript
+- **Charts**: Chart.js with react-chartjs-2
+- **Database**: Firebase Firestore
+- **Hosting**: Firebase Hosting
+- **Build Tool**: Create React App
+- **Styling**: CSS with responsive design
 
 ## Features
 
