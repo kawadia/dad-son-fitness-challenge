@@ -34,7 +34,8 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ workoutData }) => 
     for (let i = 13; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateString = date.toISOString().split('T')[0];
+      // Use local timezone for consistency with data storage
+      const dateString = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0];
       const shortDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       
       dates.push(shortDate);

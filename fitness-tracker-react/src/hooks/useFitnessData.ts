@@ -9,14 +9,18 @@ export const useFitnessData = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
   const [lastOperationType, setLastOperationType] = useState<'add' | 'undo' | 'sync' | null>(null);
-  const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [currentDate, setCurrentDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+  });
 
   const today = currentDate;
 
   // Check for date changes every minute
   useEffect(() => {
     const checkDateChange = () => {
-      const newDate = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const newDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
       if (newDate !== currentDate) {
         console.log('Date changed from', currentDate, 'to', newDate);
         setCurrentDate(newDate);
