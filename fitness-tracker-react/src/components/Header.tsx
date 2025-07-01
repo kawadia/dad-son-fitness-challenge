@@ -6,6 +6,7 @@ interface HeaderProps {
   dailyGoal: number;
   onConnect: (familyId: string) => Promise<void>;
   onDisconnect: () => void;
+  onUpdateGoal: (newGoal: number) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -13,7 +14,8 @@ export const Header: React.FC<HeaderProps> = ({
   isConnected,
   dailyGoal,
   onConnect,
-  onDisconnect
+  onDisconnect,
+  onUpdateGoal
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
@@ -49,11 +51,32 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const handleUpdateGoal = () => {
+    const newGoal = prompt('Enter new daily goal:', dailyGoal.toString());
+    if (newGoal && !isNaN(parseInt(newGoal))) {
+      const goalValue = parseInt(newGoal);
+      if (goalValue < 1) {
+        alert('Goal must be at least 1');
+        return;
+      }
+      if (goalValue >= 278) {
+        alert('Goal must be less than 278');
+        return;
+      }
+      onUpdateGoal(goalValue);
+    }
+  };
+
+
   return (
     <div className="header">
       <h1>💪 Dad & Son Fitness Challenge 🔥</h1>
-      <p>🎯 Daily Goal: {dailyGoal} Reps 🎯</p>
+      <p>
+        🎯 Daily Goal: {dailyGoal} Reps 🎯
+        <button onClick={handleUpdateGoal} style={{ marginLeft: '10px' }}>Edit</button>
+      </p>
       <p>💯 Stay Strong Together! 💯</p>
+
       
       {!isConnected ? (
         <div id="family-setup" style={{ marginTop: '20px', padding: '16px', background: '#f9fafb', borderRadius: '8px' }}>

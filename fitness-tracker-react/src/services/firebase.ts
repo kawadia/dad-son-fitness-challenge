@@ -38,21 +38,22 @@ export class FirebaseService {
     return doc(db, 'families', this.familyId);
   }
 
-  private getGoalDocRef(date: string) {
-    if (!this.familyId) {
-      throw new Error('Family ID not set');
-    }
-    return doc(db, 'dailyGoals', `${this.familyId}_${date}`);
-  }
-
   async getDailyGoal(date: string): Promise<number | null> {
-    if (!this.familyId) return null;
+    if (!this.familyId) {
+      console.log('Firebase: No family ID set');
+      return null;
+    }
     try {
-      const docRef = this.getGoalDocRef(date);
+      const docRef = this.getFamilyDocRef();
+      console.log('Firebase: Getting goal for date', date, 'from family document');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        return docSnap.data().goal;
+        const data = docSnap.data();
+        const goalData = data.dailyGoals?.[date];
+        console.log('Firebase: Goal data for', date, ':', goalData);
+        return goalData || null;
       }
+      console.log('Firebase: Family document does not exist');
       return null;
     } catch (error) {
       console.error('Error getting daily goal:', error);
@@ -61,10 +62,30 @@ export class FirebaseService {
   }
 
   async setDailyGoal(date: string, goal: number): Promise<void> {
-    if (!this.familyId) return;
+    if (!this.familyId) {
+      console.log('Firebase: Cannot set goal, no family ID');
+      return;
+    }
     try {
-      const docRef = this.getGoalDocRef(date);
-      await setDoc(docRef, { goal });
+      const docRef = this.getFamilyDocRef();
+      console.log('Firebase: Setting goal', goal, 'for date', date, 'in family document');
+      
+      // Get current document data
+      const docSnap = await getDoc(docRef);
+      const currentData = docSnap.exists() ? docSnap.data() : { Dad: {}, Son: {} };
+      
+      // Update the daily goals section
+      const updatedData = {
+        ...currentData,
+        dailyGoals: {
+          ...currentData.dailyGoals,
+          [date]: goal
+        },
+        lastUpdated: new Date().toISOString()
+      };
+      
+      await setDoc(docRef, updatedData);
+      console.log('Firebase: Goal saved successfully');
     } catch (error) {
       console.error('Error setting daily goal:', error);
       throw error;
@@ -137,6 +158,8 @@ export class FirebaseService {
       }
     });
   }
+
+
 }
 
 export const firebaseService = new FirebaseService();

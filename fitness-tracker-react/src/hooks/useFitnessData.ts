@@ -10,7 +10,7 @@ export const useFitnessData = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
   const [currentDate, setCurrentDate] = useState(() => formatISO(new Date(), { representation: 'date' }));
-  const [dailyGoal, setDailyGoal] = useState<number>(0);
+  const [dailyGoal, setDailyGoal] = useState<number>(141);
 
   const today = currentDate;
 
@@ -31,22 +31,30 @@ export const useFitnessData = () => {
 
   // Set daily goal when date changes or on initial load
   useEffect(() => {
-    const fetchOrSetGoal = async () => {
-      if (!isConnected) return;
+    if (!isConnected) return;
+
+    const loadGoal = async () => {
       try {
-        let goal = await firebaseService.getDailyGoal(currentDate);
-        if (goal === null) {
-          goal = Math.floor(Math.random() * (227 - 141 + 1)) + 141;
-          await firebaseService.setDailyGoal(currentDate, goal);
+        console.log('Loading goal for date:', currentDate);
+        
+        const firebaseGoal = await firebaseService.getDailyGoal(currentDate);
+        console.log('Loaded goal from Firebase:', firebaseGoal);
+        
+        if (firebaseGoal !== null) {
+          setDailyGoal(firebaseGoal);
+        } else {
+          // No goal exists, set default and save it
+          console.log('No goal found, setting default 141');
+          setDailyGoal(141);
+          await firebaseService.setDailyGoal(currentDate, 141);
         }
-        setDailyGoal(goal);
       } catch (error) {
-        console.error('Error setting daily goal:', error);
-        // Fallback to a default goal if Firebase fails
+        console.error('Error loading daily goal:', error);
         setDailyGoal(141);
       }
     };
-    fetchOrSetGoal();
+
+    loadGoal();
   }, [currentDate, isConnected]);
 
   // Load saved data from localStorage
@@ -235,6 +243,19 @@ export const useFitnessData = () => {
     return todayData ? todayData.goalMet : false;
   }, [workoutData, today]);
 
+  const updateDailyGoal = useCallback(async (newGoal: number) => {
+    if (!isConnected) return;
+    try {
+      console.log('Updating daily goal to:', newGoal, 'for date:', currentDate);
+      setDailyGoal(newGoal);
+      await firebaseService.setDailyGoal(currentDate, newGoal);
+      console.log('Daily goal saved successfully');
+    } catch (error) {
+      console.error('Error updating daily goal:', error);
+    }
+  }, [currentDate, isConnected]);
+
+
   return {
     workoutData,
     familyId,
@@ -252,6 +273,7 @@ export const useFitnessData = () => {
     getTodaysSessions,
     calculateStreak,
     canUndo,
-    hasAchievedGoal
+    hasAchievedGoal,
+    updateDailyGoal
   };
 };

@@ -26,7 +26,8 @@ function App() {
     getTodaysSessions,
     calculateStreak,
     canUndo,
-    dailyGoal
+    dailyGoal,
+    updateDailyGoal
   } = useFitnessData();
 
   return (
@@ -38,6 +39,7 @@ function App() {
           dailyGoal={dailyGoal}
           onConnect={connectFamily}
           onDisconnect={disconnectFamily}
+          onUpdateGoal={updateDailyGoal}
         />
 
         {isConnected && (
