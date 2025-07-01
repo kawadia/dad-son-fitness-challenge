@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { WorkoutData } from '../types';
+import { subDays, format } from 'date-fns';
 
 ChartJS.register(
   CategoryScale,
@@ -30,19 +31,15 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ workoutData }) => 
     const dadData: number[] = [];
     const sonData: number[] = [];
     
-    // Generate last 14 days
     for (let i = 13; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      // Use local timezone for consistency with data storage
-      const dateString = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      const shortDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const date = subDays(new Date(), i);
+      const dateString = format(date, 'yyyy-MM-dd');
+      const shortDate = format(date, 'MMM d');
       
       dates.push(shortDate);
       
-      // Get data for each user
-      const dadProgress = (workoutData.Dad && workoutData.Dad[dateString]) ? workoutData.Dad[dateString].totalReps : 0;
-      const sonProgress = (workoutData.Son && workoutData.Son[dateString]) ? workoutData.Son[dateString].totalReps : 0;
+      const dadProgress = workoutData.Dad?.[dateString]?.totalReps ?? 0;
+      const sonProgress = workoutData.Son?.[dateString]?.totalReps ?? 0;
       
       dadData.push(dadProgress);
       sonData.push(sonProgress);
@@ -63,7 +60,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ workoutData }) => 
         borderColor: 'rgba(5, 150, 105, 1)',
         borderWidth: 2,
         borderRadius: 4,
-        borderSkipped: false as any,
+        borderSkipped: false,
       },
       {
         label: '👦 Son',
@@ -72,12 +69,12 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ workoutData }) => 
         borderColor: 'rgba(37, 99, 235, 1)',
         borderWidth: 2,
         borderRadius: 4,
-        borderSkipped: false as any,
+        borderSkipped: false,
       }
     ]
   };
 
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -100,7 +97,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ workoutData }) => 
         borderColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
         callbacks: {
-          label: function(context: any) {
+          label: function(context: import('chart.js').TooltipItem<'bar'>) {
             return `${context.dataset.label}: ${context.parsed.y} reps`;
           }
         }

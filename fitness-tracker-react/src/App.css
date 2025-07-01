@@ -211,6 +211,15 @@ body {
   gap: 16px;
 }
 
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserType } from '../types';
 import { MotivationService, getTimeLeft } from '../services/motivationService';
 
@@ -14,13 +14,7 @@ export const MotivationalQuote: React.FC<MotivationalQuoteProps> = ({
   const [quote, setQuote] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isConnected) {
-      loadMotivationalQuote();
-    }
-  }, [isConnected, getTodaysProgress]);
-
-  const loadMotivationalQuote = async () => {
+  const loadMotivationalQuote = useCallback(async () => {
     setIsLoading(true);
     try {
       const dadReps = getTodaysProgress('Dad');
@@ -55,7 +49,13 @@ export const MotivationalQuote: React.FC<MotivationalQuoteProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getTodaysProgress]);
+
+  useEffect(() => {
+    if (isConnected) {
+      loadMotivationalQuote();
+    }
+  }, [isConnected, loadMotivationalQuote]);
 
   if (!isConnected) {
     return null;

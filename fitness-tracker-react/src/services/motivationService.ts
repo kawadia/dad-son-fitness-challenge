@@ -41,7 +41,7 @@ export class MotivationService {
 
 
   private static getFallbackQuote(stats: WorkoutStats): string {
-    const { dadReps, sonReps, dadGoalMet, sonGoalMet, hoursLeft } = stats;
+    const { dadGoalMet, sonGoalMet, hoursLeft } = stats;
     
     const fallbackQuotes = [
       "💪 The family that squats together, stays together! Keep pushing!",

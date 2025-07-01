@@ -9,7 +9,6 @@ export const useFitnessData = () => {
   const [currentUser, setCurrentUser] = useState<UserType>('Dad');
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
-  const [lastOperationType, setLastOperationType] = useState<'add' | 'undo' | 'sync' | null>(null);
   const [currentDate, setCurrentDate] = useState(() => formatISO(new Date(), { representation: 'date' }));
 
   const today = currentDate;
@@ -62,18 +61,8 @@ export const useFitnessData = () => {
     return updatedData;
   }, [today]);
 
-  // Update data when date changes
-  useEffect(() => {
-    if (isConnected && workoutData) {
-      const updatedData = ensureTodaysData(workoutData);
-      if (JSON.stringify(updatedData) !== JSON.stringify(workoutData)) {
-        setWorkoutData(updatedData);
-      }
-    }
-  }, [today, isConnected, workoutData, ensureTodaysData]);
-
   // Connect to family
-  const connectFamily = async (inputFamilyId: string) => {
+  const connectFamily = useCallback(async (inputFamilyId: string) => {
     if (!inputFamilyId.trim()) {
       throw new Error('Please enter a family ID');
     }
@@ -93,7 +82,6 @@ export const useFitnessData = () => {
       // Set up real-time listener
       firebaseService.setupRealtimeListener((data) => {
         const dataWithToday = ensureTodaysData(data);
-        setLastOperationType('sync'); // Mark as sync operation to prevent confetti
         setWorkoutData(dataWithToday);
       });
       
@@ -104,7 +92,34 @@ export const useFitnessData = () => {
       console.error('Error connecting to family:', error);
       throw error;
     }
-  };
+  }, [ensureTodaysData]);
+
+  // Load saved data from localStorage
+  useEffect(() => {
+    try {
+      const savedFamilyId = localStorage.getItem('familyId');
+      const savedUser = localStorage.getItem('selectedUser') as UserType;
+      
+      if (savedFamilyId) {
+        connectFamily(savedFamilyId);
+      }
+      if (savedUser && (savedUser === 'Dad' || savedUser === 'Son')) {
+        setCurrentUser(savedUser);
+      }
+    } catch (error) {
+      console.error('Error loading saved data:', error);
+    }
+  }, []);
+
+  // Update data when date changes
+  useEffect(() => {
+    if (isConnected && workoutData) {
+      const updatedData = ensureTodaysData(workoutData);
+      if (JSON.stringify(updatedData) !== JSON.stringify(workoutData)) {
+        setWorkoutData(updatedData);
+      }
+    }
+  }, [today, isConnected, workoutData, ensureTodaysData]);
 
   // Disconnect from family
   const disconnectFamily = useCallback(() => {
@@ -146,8 +161,6 @@ export const useFitnessData = () => {
     userToday.totalReps += reps;
     userToday.goalMet = userToday.totalReps >= 141;
 
-    // Set operation type to 'add' and trigger confetti if goal is met
-    setLastOperationType('add');
     if (userToday.goalMet) {
       setGoalAchieved({ user: currentUser, timestamp: Date.now() });
     }
@@ -168,8 +181,6 @@ export const useFitnessData = () => {
     updatedData[currentUser][today].totalReps -= lastSession.reps;
     updatedData[currentUser][today].goalMet = updatedData[currentUser][today].totalReps >= 141;
     
-    // Set operation type to 'undo' and clear any pending confetti
-    setLastOperationType('undo');
     setGoalAchieved(null);
     
     setWorkoutData(updatedData);

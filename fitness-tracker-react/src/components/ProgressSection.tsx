@@ -58,8 +58,6 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
 
   const renderProgressCard = (user: UserType) => {
     const progress = getTodaysProgress(user);
-    const sessions = getTodaysSessions(user);
-    const streak = calculateStreak(user);
     const percentage = Math.min((progress / 141) * 100, 100);
     const userLower = user.toLowerCase();
     const emoji = user === 'Dad' ? '👨' : '👦';

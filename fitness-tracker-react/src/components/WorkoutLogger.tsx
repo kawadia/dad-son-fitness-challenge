@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserType } from '../types';
 
 interface WorkoutLoggerProps {
@@ -29,10 +29,18 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   const [selectedExercise, setSelectedExercise] = useState('squats');
   const [reps, setReps] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleAddWorkout = async () => {
     if (!isConnected) {
-      alert('Please connect to your family first!');
+      setError('Please connect to your family first!');
       return;
     }
     
@@ -40,12 +48,13 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
     if (!repsNum || repsNum <= 0) return;
 
     setIsSubmitting(true);
+    setError(null);
     try {
       await onAddWorkout(selectedExercise, repsNum);
       setReps('');
-    } catch (error) {
-      console.error('Error adding workout:', error);
-      alert('Error adding workout. Please try again.');
+    } catch (err) {
+      console.error('Error adding workout:', err);
+      setError('Error adding workout. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -53,15 +62,16 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
 
   const handleUndoWorkout = async () => {
     if (!isConnected) {
-      alert('Please connect to your family first!');
+      setError('Please connect to your family first!');
       return;
     }
     
+    setError(null);
     try {
       await onUndoWorkout();
-    } catch (error) {
-      console.error('Error undoing workout:', error);
-      alert('Error undoing workout. Please try again.');
+    } catch (err) {
+      console.error('Error undoing workout:', err);
+      setError('Error undoing workout. Please try again.');
     }
   };
 
@@ -94,10 +104,13 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
       </div>
 
+      {error && <div className="error-message">{error}</div>}
+
       <div className="logger-form">
         <div className="form-group">
-          <label className="form-label">Exercise</label>
+          <label htmlFor="exercise-select" className="form-label">Exercise</label>
           <select
+            id="exercise-select"
             className="form-select"
             value={selectedExercise}
             onChange={(e) => setSelectedExercise(e.target.value)}
@@ -111,8 +124,9 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
         
         <div className="form-group">
-          <label className="form-label">Reps</label>
+          <label htmlFor="reps-input" className="form-label">Reps</label>
           <input
+            id="reps-input"
             type="number"
             className="form-input"
             placeholder="Enter reps"

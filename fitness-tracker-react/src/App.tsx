@@ -25,8 +25,7 @@ function App() {
     getTodaysProgress,
     getTodaysSessions,
     calculateStreak,
-    canUndo,
-    hasAchievedGoal
+    canUndo
   } = useFitnessData();
 
   return (
