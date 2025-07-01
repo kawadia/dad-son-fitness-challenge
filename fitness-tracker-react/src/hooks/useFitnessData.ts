@@ -10,6 +10,7 @@ export const useFitnessData = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
   const [currentDate, setCurrentDate] = useState(() => formatISO(new Date(), { representation: 'date' }));
+  const [dailyGoal, setDailyGoal] = useState<number>(0);
 
   const today = currentDate;
 
@@ -26,6 +27,22 @@ export const useFitnessData = () => {
     }, 60000); // Check every minute
     
     return () => clearInterval(interval);
+  }, [currentDate]);
+
+  // Set daily goal when date changes or on initial load
+  useEffect(() => {
+    try {
+      const savedGoal = localStorage.getItem(`dailyGoal_${currentDate}`);
+      if (savedGoal) {
+        setDailyGoal(parseInt(savedGoal, 10));
+      } else {
+        const newGoal = Math.floor(Math.random() * (227 - 141 + 1)) + 141;
+        setDailyGoal(newGoal);
+        localStorage.setItem(`dailyGoal_${currentDate}`, newGoal.toString());
+      }
+    } catch (error) {
+      console.error('Error setting daily goal:', error);
+    }
   }, [currentDate]);
 
   // Load saved data from localStorage
@@ -94,23 +111,6 @@ export const useFitnessData = () => {
     }
   }, [ensureTodaysData]);
 
-  // Load saved data from localStorage
-  useEffect(() => {
-    try {
-      const savedFamilyId = localStorage.getItem('familyId');
-      const savedUser = localStorage.getItem('selectedUser') as UserType;
-      
-      if (savedFamilyId) {
-        connectFamily(savedFamilyId);
-      }
-      if (savedUser && (savedUser === 'Dad' || savedUser === 'Son')) {
-        setCurrentUser(savedUser);
-      }
-    } catch (error) {
-      console.error('Error loading saved data:', error);
-    }
-  }, []);
-
   // Update data when date changes
   useEffect(() => {
     if (isConnected && workoutData) {
@@ -159,7 +159,7 @@ export const useFitnessData = () => {
     
     userToday.sessions.push(session);
     userToday.totalReps += reps;
-    userToday.goalMet = userToday.totalReps >= 141;
+    userToday.goalMet = userToday.totalReps >= dailyGoal;
 
     if (userToday.goalMet) {
       setGoalAchieved({ user: currentUser, timestamp: Date.now() });
@@ -167,7 +167,7 @@ export const useFitnessData = () => {
 
     setWorkoutData(updatedData);
     await firebaseService.saveData(updatedData);
-  }, [workoutData, currentUser, today, familyId]);
+  }, [workoutData, currentUser, today, familyId, dailyGoal]);
 
   // Undo last workout
   const undoLastWorkout = useCallback(async () => {
@@ -179,13 +179,13 @@ export const useFitnessData = () => {
     const updatedData = { ...workoutData };
     const lastSession = updatedData[currentUser][today].sessions.pop()!;
     updatedData[currentUser][today].totalReps -= lastSession.reps;
-    updatedData[currentUser][today].goalMet = updatedData[currentUser][today].totalReps >= 141;
+    updatedData[currentUser][today].goalMet = updatedData[currentUser][today].totalReps >= dailyGoal;
     
     setGoalAchieved(null);
     
     setWorkoutData(updatedData);
     await firebaseService.saveData(updatedData);
-  }, [workoutData, currentUser, today, familyId]);
+  }, [workoutData, currentUser, today, familyId, dailyGoal]);
 
   // Get today's progress for user
   const getTodaysProgress = useCallback((user: UserType): number => {
@@ -238,6 +238,7 @@ export const useFitnessData = () => {
     isConnected,
     today,
     goalAchieved,
+    dailyGoal,
     connectFamily,
     disconnectFamily,
     selectUser,

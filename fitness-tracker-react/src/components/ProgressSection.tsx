@@ -5,12 +5,14 @@ interface ProgressSectionProps {
   getTodaysProgress: (user: UserType) => number;
   getTodaysSessions: (user: UserType) => any[];
   calculateStreak: (user: UserType) => number;
+  dailyGoal: number;
 }
 
 export const ProgressSection: React.FC<ProgressSectionProps> = ({
   getTodaysProgress,
   getTodaysSessions,
-  calculateStreak
+  calculateStreak,
+  dailyGoal
 }) => {
   const [dateTimeInfo, setDateTimeInfo] = useState('');
 
@@ -58,7 +60,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
 
   const renderProgressCard = (user: UserType) => {
     const progress = getTodaysProgress(user);
-    const percentage = Math.min((progress / 141) * 100, 100);
+    const percentage = Math.min((progress / dailyGoal) * 100, 100);
     const userLower = user.toLowerCase();
     const emoji = user === 'Dad' ? '👨' : '👦';
 
@@ -66,12 +68,12 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({
       <div key={user} className={`progress-card ${userLower}`}>
         <div className="progress-header">
           <div className="progress-label">{emoji} {user}'s Progress</div>
-          <div className="progress-value">{progress}/141 💪</div>
+          <div className="progress-value">{progress}/{dailyGoal} 💪</div>
         </div>
         <div className={`progress-bar ${userLower}`}>
           <div className="progress-fill" style={{ width: `${percentage}%` }}></div>
         </div>
-        {progress >= 141 && (
+        {progress >= dailyGoal && (
           <div className="goal-completed">🎉 GOAL COMPLETED! 🎉</div>
         )}
       </div>

@@ -25,7 +25,8 @@ function App() {
     getTodaysProgress,
     getTodaysSessions,
     calculateStreak,
-    canUndo
+    canUndo,
+    dailyGoal
   } = useFitnessData();
 
   return (
@@ -49,6 +50,7 @@ function App() {
               getTodaysProgress={getTodaysProgress}
               getTodaysSessions={getTodaysSessions}
               calculateStreak={calculateStreak}
+              dailyGoal={dailyGoal}
             />
 
             <WorkoutLogger
