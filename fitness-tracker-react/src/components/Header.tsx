@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 interface HeaderProps {
   familyId: string | null;
   isConnected: boolean;
+  dailyGoal: number;
   onConnect: (familyId: string) => Promise<void>;
   onDisconnect: () => void;
 }
@@ -10,6 +11,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   familyId,
   isConnected,
+  dailyGoal,
   onConnect,
   onDisconnect
 }) => {
@@ -50,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <div className="header">
       <h1>💪 Dad & Son Fitness Challenge 🔥</h1>
-      <p>🎯 Daily Goal: 141 Reps 🎯</p>
+      <p>🎯 Daily Goal: {dailyGoal} Reps 🎯</p>
       <p>💯 Stay Strong Together! 💯</p>
       
       {!isConnected ? (

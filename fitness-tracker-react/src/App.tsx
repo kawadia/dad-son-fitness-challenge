@@ -35,6 +35,7 @@ function App() {
         <Header
           familyId={familyId}
           isConnected={isConnected}
+          dailyGoal={dailyGoal}
           onConnect={connectFamily}
           onDisconnect={disconnectFamily}
         />
@@ -83,6 +84,7 @@ function App() {
           isGoalMet={true}
           userName={goalAchieved.user}
           totalReps={getTodaysProgress(goalAchieved.user)}
+          dailyGoal={dailyGoal}
         />
       )}
     </div>

@@ -5,12 +5,14 @@ interface ConfettiCelebrationProps {
   isGoalMet: boolean;
   userName: string;
   totalReps?: number;
+  dailyGoal: number;
 }
 
 export const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
   isGoalMet,
   userName,
-  totalReps = 0
+  totalReps = 0,
+  dailyGoal
 }) => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({
@@ -35,14 +37,14 @@ export const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
       setShowConfetti(true);
       
       // Stop confetti after 3 seconds for regular workouts, 5 seconds for first goal achievement
-      const duration = totalReps === 141 ? 5000 : 3000;
+      const duration = totalReps >= dailyGoal ? 5000 : 3000;
       const timer = setTimeout(() => {
         setShowConfetti(false);
       }, duration);
       
       return () => clearTimeout(timer);
     }
-  }, [isGoalMet, totalReps]);
+  }, [isGoalMet, totalReps, dailyGoal]);
 
   if (!showConfetti) return null;
 
@@ -51,10 +53,10 @@ export const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
       <Confetti
         width={windowDimensions.width}
         height={windowDimensions.height}
-        numberOfPieces={totalReps === 141 ? 300 : 150}
+        numberOfPieces={totalReps >= dailyGoal ? 300 : 150}
         recycle={false}
         gravity={0.3}
-        initialVelocityY={totalReps === 141 ? 20 : 15}
+        initialVelocityY={totalReps >= dailyGoal ? 20 : 15}
         colors={[
           '#10b981', // Dad's green
           '#3b82f6', // Son's blue
@@ -83,7 +85,7 @@ export const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
         animation: 'fadeInOut 5s ease-in-out',
         pointerEvents: 'none'
       }}>
-        🎉 {userName} {totalReps === 141 ? 'reached the daily goal!' : 'keeping it going!'} 🎉
+        🎉 {userName} {totalReps >= dailyGoal ? 'reached the daily goal!' : 'keeping it going!'} 🎉
         <div style={{ fontSize: '1rem', marginTop: '8px', opacity: 0.9 }}>
           {totalReps} reps completed! 💪
         </div>

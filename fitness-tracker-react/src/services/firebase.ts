@@ -38,6 +38,39 @@ export class FirebaseService {
     return doc(db, 'families', this.familyId);
   }
 
+  private getGoalDocRef(date: string) {
+    if (!this.familyId) {
+      throw new Error('Family ID not set');
+    }
+    return doc(db, 'dailyGoals', `${this.familyId}_${date}`);
+  }
+
+  async getDailyGoal(date: string): Promise<number | null> {
+    if (!this.familyId) return null;
+    try {
+      const docRef = this.getGoalDocRef(date);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data().goal;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting daily goal:', error);
+      throw error;
+    }
+  }
+
+  async setDailyGoal(date: string, goal: number): Promise<void> {
+    if (!this.familyId) return;
+    try {
+      const docRef = this.getGoalDocRef(date);
+      await setDoc(docRef, { goal });
+    } catch (error) {
+      console.error('Error setting daily goal:', error);
+      throw error;
+    }
+  }
+
   async initializeData(): Promise<WorkoutData | null> {
     if (!this.familyId) return null;
     

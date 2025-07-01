@@ -31,19 +31,23 @@ export const useFitnessData = () => {
 
   // Set daily goal when date changes or on initial load
   useEffect(() => {
-    try {
-      const savedGoal = localStorage.getItem(`dailyGoal_${currentDate}`);
-      if (savedGoal) {
-        setDailyGoal(parseInt(savedGoal, 10));
-      } else {
-        const newGoal = Math.floor(Math.random() * (227 - 141 + 1)) + 141;
-        setDailyGoal(newGoal);
-        localStorage.setItem(`dailyGoal_${currentDate}`, newGoal.toString());
+    const fetchOrSetGoal = async () => {
+      if (!isConnected) return;
+      try {
+        let goal = await firebaseService.getDailyGoal(currentDate);
+        if (goal === null) {
+          goal = Math.floor(Math.random() * (227 - 141 + 1)) + 141;
+          await firebaseService.setDailyGoal(currentDate, goal);
+        }
+        setDailyGoal(goal);
+      } catch (error) {
+        console.error('Error setting daily goal:', error);
+        // Fallback to a default goal if Firebase fails
+        setDailyGoal(141);
       }
-    } catch (error) {
-      console.error('Error setting daily goal:', error);
-    }
-  }, [currentDate]);
+    };
+    fetchOrSetGoal();
+  }, [currentDate, isConnected]);
 
   // Load saved data from localStorage
   useEffect(() => {

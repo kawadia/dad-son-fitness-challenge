@@ -1,32 +1,34 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import App from './App';
+import { useFitnessData } from './hooks/useFitnessData';
 
-// Mock the Firebase service
-jest.mock('./services/firebase', () => ({
-  FirebaseService: {
-    getInstance: () => ({
-      connectToFamily: jest.fn().mockResolvedValue(true),
-      disconnectFromFamily: jest.fn(),
-      initializeData: jest.fn().mockResolvedValue({}),
-      addWorkout: jest.fn().mockResolvedValue(undefined),
-      undoLastWorkout: jest.fn().mockResolvedValue(undefined),
-      exportData: jest.fn().mockResolvedValue('test,data'),
-      onDataChange: jest.fn()
-    })
-  }
-}));
+// Mock the useFitnessData hook
+jest.mock('./hooks/useFitnessData');
 
-// Mock the motivation service
-jest.mock('./services/motivationService', () => ({
-  MotivationService: {
-    getMotivationalQuote: jest.fn().mockResolvedValue('Keep pushing! 💪')
-  },
-  getTimeLeft: jest.fn(() => ({ hoursLeft: 12, minutesLeft: 30 }))
-}));
+const mockedUseFitnessData = useFitnessData as jest.Mock;
 
 describe('App Component', () => {
+  beforeEach(() => {
+    mockedUseFitnessData.mockReturnValue({
+      workoutData: { Dad: {}, Son: {} },
+      familyId: null,
+      currentUser: 'Dad',
+      isConnected: false,
+      goalAchieved: null,
+      dailyGoal: 150, // Mocked daily goal
+      connectFamily: jest.fn(),
+      disconnectFamily: jest.fn(),
+      selectUser: jest.fn(),
+      addWorkout: jest.fn(),
+      undoLastWorkout: jest.fn(),
+      getTodaysProgress: jest.fn(() => 0),
+      getTodaysSessions: jest.fn(() => []),
+      calculateStreak: jest.fn(() => 0),
+      canUndo: jest.fn(() => false),
+    });
+  });
+
   test('renders fitness tracker header', () => {
     render(<App />);
     expect(screen.getByText(/Dad & Son Fitness Challenge/i)).toBeInTheDocument();
@@ -45,7 +47,7 @@ describe('App Component', () => {
 
   test('shows daily goal information', () => {
     render(<App />);
-    expect(screen.getByText(/Daily Goal: 141 Reps/i)).toBeInTheDocument();
+    expect(screen.getByText(/Daily Goal: 150 Reps/i)).toBeInTheDocument();
     expect(screen.getByText(/Stay Strong Together/i)).toBeInTheDocument();
   });
 });
