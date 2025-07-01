@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { WorkoutData, UserType, WorkoutSession } from '../types';
 import { firebaseService } from '../services/firebase';
+import { formatISO, isToday } from 'date-fns';
 
 export const useFitnessData = () => {
   const [workoutData, setWorkoutData] = useState<WorkoutData>({ Dad: {}, Son: {} });
@@ -9,29 +10,21 @@ export const useFitnessData = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [goalAchieved, setGoalAchieved] = useState<{user: UserType, timestamp: number} | null>(null);
   const [lastOperationType, setLastOperationType] = useState<'add' | 'undo' | 'sync' | null>(null);
-  const [currentDate, setCurrentDate] = useState(() => {
-    const now = new Date();
-    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-  });
+  const [currentDate, setCurrentDate] = useState(() => formatISO(new Date(), { representation: 'date' }));
 
   const today = currentDate;
 
   // Check for date changes every minute
   useEffect(() => {
-    const checkDateChange = () => {
-      const now = new Date();
-      const newDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    const interval = setInterval(() => {
+      const newDate = formatISO(new Date(), { representation: 'date' });
       if (newDate !== currentDate) {
         console.log('Date changed from', currentDate, 'to', newDate);
         setCurrentDate(newDate);
         // Clear any goal achievements since it's a new day
         setGoalAchieved(null);
       }
-    };
-
-    // Check immediately and then every minute
-    checkDateChange();
-    const interval = setInterval(checkDateChange, 60000); // Check every minute
+    }, 60000); // Check every minute
     
     return () => clearInterval(interval);
   }, [currentDate]);
@@ -201,16 +194,12 @@ export const useFitnessData = () => {
     const dates = Object.keys(userData).sort().reverse();
     let streak = 0;
     
-    // Get current local date for comparison
-    const now = new Date();
-    const localToday = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-    
     for (const date of dates) {
       if (userData[date]?.goalMet) {
         streak++;
       } else {
         // Don't break the streak if today's goal isn't met yet (day in progress)
-        if (date === localToday) {
+        if (isToday(new Date(date))) {
           continue;
         }
         break;
