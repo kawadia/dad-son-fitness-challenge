@@ -201,10 +201,18 @@ export const useFitnessData = () => {
     const dates = Object.keys(userData).sort().reverse();
     let streak = 0;
     
+    // Get current local date for comparison
+    const now = new Date();
+    const localToday = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    
     for (const date of dates) {
       if (userData[date]?.goalMet) {
         streak++;
       } else {
+        // Don't break the streak if today's goal isn't met yet (day in progress)
+        if (date === localToday) {
+          continue;
+        }
         break;
       }
     }
