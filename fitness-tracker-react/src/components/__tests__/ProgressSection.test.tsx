@@ -11,7 +11,8 @@ describe('ProgressSection', () => {
   const defaultProps = {
     getTodaysProgress: mockGetTodaysProgress,
     getTodaysSessions: mockGetTodaysSessions,
-    calculateStreak: mockCalculateStreak
+    calculateStreak: mockCalculateStreak,
+    dailyGoal: 141
   };
 
   beforeEach(() => {

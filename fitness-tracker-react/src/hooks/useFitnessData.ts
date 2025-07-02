@@ -74,7 +74,7 @@ export const useFitnessData = () => {
     }
   }, []);
 
-  // Ensure today's data exists for both users
+  // Ensure today's data exists for both users and recalculate goalMet for all dates
   const ensureTodaysData = useCallback((data: WorkoutData): WorkoutData => {
     const updatedData = { ...data };
     ['Dad', 'Son'].forEach(user => {
@@ -86,9 +86,17 @@ export const useFitnessData = () => {
           goalMet: false
         };
       }
+      
+      // Recalculate goalMet for all existing dates based on current dailyGoal
+      Object.keys(updatedData[user as UserType]).forEach(date => {
+        const dayData = updatedData[user as UserType][date];
+        if (dayData) {
+          dayData.goalMet = dayData.totalReps >= dailyGoal;
+        }
+      });
     });
     return updatedData;
-  }, [today]);
+  }, [today, dailyGoal]);
 
   // Connect to family
   const connectFamily = useCallback(async (inputFamilyId: string) => {
@@ -217,6 +225,13 @@ export const useFitnessData = () => {
     const dates = Object.keys(userData).sort().reverse();
     let streak = 0;
     
+    console.log(`Calculating streak for ${user}:`, dates.map(date => ({
+      date, 
+      totalReps: userData[date]?.totalReps, 
+      goalMet: userData[date]?.goalMet,
+      dailyGoal
+    })));
+    
     for (const date of dates) {
       if (userData[date]?.goalMet) {
         streak++;
@@ -228,8 +243,9 @@ export const useFitnessData = () => {
         break;
       }
     }
+    console.log(`${user} streak result:`, streak);
     return streak;
-  }, [workoutData]);
+  }, [workoutData, dailyGoal]);
 
   // Check if user can undo
   const canUndo = useCallback((): boolean => {
